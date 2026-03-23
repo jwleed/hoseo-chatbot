@@ -5,7 +5,9 @@ import com.hoseo.chatbot.dto.ChatRequestDto;
 import com.hoseo.chatbot.dto.ChatResponseDto;
 import com.hoseo.chatbot.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -15,11 +17,8 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
 
-    @PostMapping("/ask")
-    public ChatResponseDto ask(@RequestBody ChatRequestDto request) {
-        // 프론트가 보낸 JSON을 request 객체로 변환
-
-        return chatService.ask(request);
-        // 반환
+    @PostMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)  // produces 추가
+    public SseEmitter ask(@RequestBody ChatRequestDto request) {
+        return chatService.ask(request);  // 반환 타입만 바뀜
     }
 }
