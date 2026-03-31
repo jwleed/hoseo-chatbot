@@ -21,4 +21,6 @@ public class ChatController {
     public SseEmitter ask(@RequestBody ChatRequestDto request) {
         return chatService.ask(request);  // 반환 타입만 바뀜
     }
+
+
 }
