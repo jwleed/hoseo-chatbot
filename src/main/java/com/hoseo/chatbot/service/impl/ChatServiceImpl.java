@@ -1,7 +1,7 @@
 package com.hoseo.chatbot.service.impl;
 
 import com.hoseo.chatbot.dto.ChatRequestDto;
-import com.hoseo.chatbot.dto.ChatResponseDto;
+//import com.hoseo.chatbot.dto.ChatResponseDto;
 import com.hoseo.chatbot.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

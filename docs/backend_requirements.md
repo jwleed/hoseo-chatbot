@@ -56,10 +56,10 @@ Accept: text/event-stream
 ```
 
 | 필드 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| userId | String | ✅ | 기기 식별값 (앱에서 UUID 생성) |
-| sessionId | String | ✅ | 세션 식별값 (앱에서 UUID 생성) |
-| question | String | ✅ | 사용자 질문 |
+|---|---|----|---|
+| userId | String | O  | 기기 식별값 (앱에서 UUID 생성) |
+| sessionId | String | O  | 세션 식별값 (앱에서 UUID 생성) |
+| question | String | O  | 사용자 질문 |
 
 ### 3.2 응답 (SSE)
 
@@ -126,12 +126,12 @@ data: [DONE]
 ```
 
 | 필드 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| docId | String | ✅ | 문서 식별값 |
-| title | String | ✅ | 문서 제목 |
-| fileUrl | String | ❌ | 원문 링크 (없을 수 있음) |
-| docType | String | ✅ | 문서 유형 (공지사항/규정집 등) |
-| page | Integer | ❌ | 페이지 번호 (없을 수 있음) |
+|---|---|----|---|
+| docId | String | O  | 문서 식별값 |
+| title | String | O  | 문서 제목 |
+| fileUrl | String | X  | 원문 링크 (없을 수 있음) |
+| docType | String | O  | 문서 유형 (공지사항/규정집 등) |
+| page | Integer | X  | 페이지 번호 (없을 수 있음) |
 
 ### 5.2 프론트 처리 필수 사항
 
@@ -216,10 +216,10 @@ data: [DONE]
 
 | 항목 | 상태 |
 |---|---|
-| `/api/v1/chat/stream` 엔드포인트 구현 여부 | ❓ 확인 필요 |
-| `sources` 스키마 확정 (`page`, `docType` 포함 여부) | ❓ 확인 필요 |
-| 오류 이벤트 포맷 통일 | ❓ 확인 필요 |
-| 서버 IP/포트 공유 | ❓ 확인 필요 |
+| `/api/v1/chat/stream` 엔드포인트 구현 여부 |  확인 필요 |
+| `sources` 스키마 확정 (`page`, `docType` 포함 여부) |  확인 필요 |
+| 오류 이벤트 포맷 통일 |  확인 필요 |
+| 서버 IP/포트 공유 |  확인 필요 |
 
 ---
 
@@ -227,13 +227,13 @@ data: [DONE]
 
 | 기능 | 상태 |
 |---|---|
-| SSE 채팅 API (`/api/chat/ask`) | ✅ 구현 완료 |
-| AI 서버 SSE 중계 | ✅ 구현 완료 |
-| 에러 처리 (SSE 형식) | ✅ 구현 완료 |
-| 대화 이력 저장/조회 | ⏳ 예정 (AWS/네이버 클라우드 배포 시) |
-| FAQ API | ⏳ 예정 |
-| 알림 서비스 API | ⏳ 예정 |
-| 헬스체크 (`/health`) | ⏳ 예정 |
+| SSE 채팅 API (`/api/chat/ask`) |  구현 완료 |
+| AI 서버 SSE 중계 |  구현 완료 |
+| 에러 처리 (SSE 형식) |  구현 완료 |
+| 대화 이력 저장/조회 |  예정 (AWS/네이버 클라우드 배포 시) |
+| FAQ API |  예정 |
+| 알림 서비스 API |  예정 |
+| 헬스체크 (`/health`) |  예정 |
 
 ---
 
