@@ -3,6 +3,7 @@ package com.hoseo.chatbot.controller;
 
 import com.hoseo.chatbot.dto.ChatRequestDto;
 //import com.hoseo.chatbot.dto.ChatResponseDto;
+import com.hoseo.chatbot.dto.ChatResponseDto;
 import com.hoseo.chatbot.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -17,10 +18,8 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
 
-    @PostMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)  // produces 추가
-    public SseEmitter ask(@RequestBody ChatRequestDto request) {
-        return chatService.ask(request);  // 반환 타입만 바뀜
+    @PostMapping("/ask")
+    public ChatResponseDto ask(@RequestBody ChatRequestDto request) {
+        return chatService.ask(request);
     }
-
-
 }

@@ -2,6 +2,7 @@ package com.hoseo.chatbot.service.impl;
 
 import com.hoseo.chatbot.dto.ChatRequestDto;
 //import com.hoseo.chatbot.dto.ChatResponseDto;
+import com.hoseo.chatbot.dto.ChatResponseDto;
 import com.hoseo.chatbot.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
@@ -31,49 +33,29 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public SseEmitter ask(ChatRequestDto request) {
-        SseEmitter emitter = new SseEmitter(180_000L);
-
-        Map<String, String> body = Map.of(
-                "user_id", request.getUserId(),
-                "session_id", request.getSessionId(),
-                "question", request.getQuestion()
+    public ChatResponseDto ask(ChatRequestDto request) {
+        Map<String, Object> body = Map.of(
+                "question", request.getQuestion(),
+                "domain", "notice",
+                "use_tv_rag", true
         );
 
-        webClient.post()
-                .uri("/api/v1/chat/stream")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.TEXT_EVENT_STREAM)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})  // ← 변경
-                .subscribe(
-                        event -> {
-                            try {
-                                String data = event.data();  // "data:" 파싱을 WebClient가 자동으로 해줌
-                                if (data == null) return;
-                                if ("[DONE]".equals(data)) {
-                                    emitter.complete();
-                                } else {
-                                    emitter.send(SseEmitter.event().data(data));
-                                }
-                            } catch (IOException e) {
-                                emitter.completeWithError(e);
-                            }
-                        },
-                        error -> {
-                            try {
-                                emitter.send(SseEmitter.event().data(
-                                        "{\"error\":{\"code\":\"CONNECTION_FAILED\",\"message\":\"Python 서버에 연결할 수 없습니다.\"}}"
-                                ));
-                                emitter.complete();
-                            } catch (IOException e) {
-                                emitter.completeWithError(e);
-                            }
-                        },
-                        emitter::complete
-                );
+        try {
+            Map response = webClient.post()
+                    .uri("/ask")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-        return emitter;
+            String answer = (String) response.get("answer");
+            List<String> sources = (List<String>) response.get("sources");
+
+            return new ChatResponseDto(answer, sources != null ? sources : List.of());
+
+        } catch (Exception e) {
+            return new ChatResponseDto("AI 서버 연결 오류: " + e.getMessage(), List.of());
+        }
     }
 }
