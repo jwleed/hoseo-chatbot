@@ -15,6 +15,9 @@ public class NoticeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
+    private String noticeId;
+
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -22,4 +25,8 @@ public class NoticeEntity {
 
     private String date;
     private String url;
+    private String category;
+    private String majorCategory;
+    private String target;
+    private String entity;
 }

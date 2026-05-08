@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NoticeRepository extends JpaRepository<NoticeEntity, Long> {
+    boolean existsByNoticeId(String noticeId);
     boolean existsByTitleAndDate(String title, String date);
 }

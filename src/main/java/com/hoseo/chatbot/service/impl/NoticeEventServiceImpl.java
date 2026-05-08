@@ -21,16 +21,24 @@ public class NoticeEventServiceImpl implements NoticeEventService {
 
         for (NoticeEventDto.NoticeItemDto item : dto.getItems()) {
 
-            if (noticeRepository.existsByTitleAndDate(item.getTitle(), item.getDate())) {
+            boolean isDuplicate = (item.getNoticeId() != null && !item.getNoticeId().isBlank())
+                    ? noticeRepository.existsByNoticeId(item.getNoticeId())
+                    : noticeRepository.existsByTitleAndDate(item.getTitle(), item.getDate());
+
+            if (isDuplicate) {
                 System.out.println("중복 공지 스킵: " + item.getTitle());
                 continue;
             }
 
             NoticeEntity entity = new NoticeEntity();
+            entity.setNoticeId(item.getNoticeId());
             entity.setTitle(item.getTitle());
-            entity.setContent(item.getCategory());
             entity.setDate(item.getDate());
             entity.setUrl(item.getUrl());
+            entity.setCategory(item.getCategory());
+            entity.setMajorCategory(item.getMajorCategory());
+            entity.setTarget(item.getTarget());
+            entity.setEntity(item.getEntity());
             noticeRepository.save(entity);
 
             System.out.println("새 공지 저장: " + item.getTitle());
