@@ -1,6 +1,13 @@
 package com.hoseo.chatbot.service.impl;
 
 import com.hoseo.chatbot.dto.ChatRequestDto;
+import com.hoseo.chatbot.entity.ChatMessageEntity;
+import com.hoseo.chatbot.entity.ChatMessageRole;
+import com.hoseo.chatbot.entity.ChatRoomEntity;
+import com.hoseo.chatbot.entity.UserEntity;
+import com.hoseo.chatbot.repository.ChatMessageRepository;
+import com.hoseo.chatbot.repository.ChatRoomRepository;
+import com.hoseo.chatbot.repository.UserRepository;
 import com.hoseo.chatbot.service.ChatService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -19,16 +26,42 @@ import java.util.Map;
 public class ChatServiceImpl implements ChatService {
 
     private final WebClient webClient;
+    private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
-    public ChatServiceImpl(@Value("${rag.server.url}") String ragServerUrl) {
+    public ChatServiceImpl(
+            @Value("${rag.server.url}") String ragServerUrl,
+            UserRepository userRepository,
+            ChatRoomRepository chatRoomRepository,
+            ChatMessageRepository chatMessageRepository) {
         this.webClient = WebClient.builder()
                 .baseUrl(ragServerUrl)
                 .build();
+        this.userRepository = userRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatMessageRepository = chatMessageRepository;
     }
 
     @Override
     public SseEmitter ask(ChatRequestDto request) {
         SseEmitter emitter = new SseEmitter(60_000L);
+
+        // userId 기반으로 사용자 찾거나 새로 생성
+        UserEntity user = userRepository.findByDeviceId(request.getUserId())
+                .orElseGet(() -> userRepository.save(new UserEntity(request.getUserId())));
+
+        // sessionId 기반으로 채팅방 찾거나 새로 생성 (제목은 첫 질문 앞 30자)
+        String title = request.getQuestion().length() > 30
+                ? request.getQuestion().substring(0, 30)
+                : request.getQuestion();
+        ChatRoomEntity chatRoom = chatRoomRepository.findBySessionId(request.getSessionId())
+                .orElseGet(() -> chatRoomRepository.save(new ChatRoomEntity(user, request.getSessionId(), title)));
+
+        // USER 메시지 저장
+        chatMessageRepository.save(new ChatMessageEntity(chatRoom, ChatMessageRole.USER, request.getQuestion()));
+        chatRoom.refreshUpdatedAt();
+        chatRoomRepository.save(chatRoom);
 
         Map<String, Object> body = Map.of(
                 "question", request.getQuestion(),
@@ -45,6 +78,11 @@ public class ChatServiceImpl implements ChatService {
                 .flatMapMany(response -> {
                     String answer = response.get("answer") != null ? (String) response.get("answer") : "";
                     List<?> sources = (List<?>) response.get("sources");
+
+                    // ASSISTANT 메시지 저장
+                    chatMessageRepository.save(new ChatMessageEntity(chatRoom, ChatMessageRole.ASSISTANT, answer));
+                    chatRoom.refreshUpdatedAt();
+                    chatRoomRepository.save(chatRoom);
 
                     // 단어 단위로 쪼개기 (공백 포함)
                     String[] tokens = answer.split("(?<= )");

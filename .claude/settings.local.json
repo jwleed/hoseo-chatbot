@@ -1,7 +1,33 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew compileJava *)"
+      "Bash(./gradlew compileJava *)",
+      "Bash(gh pr *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\study\\\\Spring\\\\hoseo-chatbot\\\\src\\\\main\\\\resources\" -File)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\study\\\\Spring\\\\hoseo-chatbot\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Format-Table -HideTableHeaders)",
+      "Bash(grep -E \"\\\\.\\(md|MD|txt|TXT\\)$\")",
+      "Bash(./gradlew bootRun)",
+      "Bash(curl -s http://localhost:8080/api/faq)",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"장학금\"}')",
+      "Bash(curl -s http://localhost:8080/api/notification/keyword/device-001)",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"열한글자임니다\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"test\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"elevencharx\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"   \"}')",
+      "Bash(curl -s -X PUT http://localhost:8080/api/notification/setting/device-001 -H 'Content-Type: application/json' -d '{\"notification_yn\":false}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/user/fcm-token -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"fcm_token\":\"test-fcm-token-abc\"}')",
+      "Bash(curl -s -X PUT http://localhost:8080/api/notification/setting/device-001 -H 'Content-Type: application/json' -d '{\"notification_yn\":true}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/notices/new -H 'Content-Type: application/json' -H 'X-API-Key: hoseo-lens-secret-key' -d '{\"source\":\"test-crawler\",\"generatedAt\":\"2026-05-12\",\"count\":1,\"items\":[{\"noticeId\":\"n-001\",\"title\":\"2026 test scholarship\",\"date\":\"2026-05-12\",\"url\":\"https://hoseo.ac.kr/n001\",\"category\":\"notice\",\"majorCategory\":\"scholarship\",\"target\":\"all\",\"entity\":\"test\"}]}')",
+      "Bash(curl -s -X DELETE http://localhost:8080/api/notification/keyword/1 -o /dev/null -w \"%{http_code}\")",
+      "Bash(pkill -f \"hoseo-chatbot\")",
+      "Bash(curl -s -X DELETE http://localhost:8080/api/notification/keyword/1 -o /dev/null -w \"del 1: %{http_code}\\\\n\")",
+      "Bash(curl -s -X DELETE http://localhost:8080/api/notification/keyword/2 -o /dev/null -w \"del 2: %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://localhost:8080/api/notification/keyword -H 'Content-Type: application/json' -d '{\"user_id\":\"device-001\",\"keyword\":\"notice\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/notices/new -H 'Content-Type: application/json' -H 'X-API-Key: hoseo-lens-secret-key' -d '{\"source\":\"crawler\",\"generatedAt\":\"2026-05-12\",\"count\":1,\"items\":[{\"noticeId\":\"n-002\",\"title\":\"important notice today\",\"date\":\"2026-05-12\",\"url\":\"https://hoseo.ac.kr/n002\",\"category\":\"notice\",\"majorCategory\":\"haksa\",\"target\":\"all\",\"entity\":\"notice\"}]}')",
+      "Bash(curl -s -X DELETE http://localhost:8080/api/notification/keyword/3 -o /dev/null -w \"HTTP %{http_code}\")"
     ]
   }
 }

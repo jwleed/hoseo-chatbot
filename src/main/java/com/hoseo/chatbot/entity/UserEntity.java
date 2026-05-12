@@ -26,10 +26,14 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 앱/브라우저에서 전달하는 userId를 deviceId처럼 저장합니다.
-    // 같은 deviceId가 중복 저장되지 않도록 unique 제약을 둡니다.
     @Column(nullable = false, unique = true)
     private String deviceId;
+
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
+    @Column(name = "notification_yn", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private Boolean notificationYn = true;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

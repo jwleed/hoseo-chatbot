@@ -378,7 +378,7 @@
             const res = await fetch(`${BASE}/api/chat/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-                body: JSON.stringify({ userId: DEVICE_ID, sessionId, question })
+                body: JSON.stringify({ user_id: DEVICE_ID, session_id: sessionId, question })
             });
 
             const reader  = res.body.getReader();
