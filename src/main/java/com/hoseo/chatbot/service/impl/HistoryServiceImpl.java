@@ -31,6 +31,7 @@ public class HistoryServiceImpl implements HistoryService {
                 .stream()
                 .map(room -> new HistoryRoomResponseDto(
                         room.getId(),
+                        room.getSessionId(),
                         room.getTitle(),
                         room.getCreatedAt()
                 ))

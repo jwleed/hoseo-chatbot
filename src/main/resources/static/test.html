@@ -26,16 +26,29 @@
         .history-list::-webkit-scrollbar { width: 4px; }
         .history-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        .history-item {
-            width: 100%; display: flex; align-items: center; gap: 8px;
-            padding: 9px 10px; border-radius: 8px; color: #ccc;
-            font-size: 0.84em; cursor: pointer; border: none; background: none; text-align: left;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .history-item-wrap {
+            display: flex; align-items: center; border-radius: 8px;
             transition: background 0.15s;
         }
-        .history-item:hover { background: #2a2a2a; color: #fff; }
-        .history-item.active { background: #2a2a2a; color: #fff; }
+        .history-item-wrap:hover { background: #2a2a2a; }
+        .history-item-wrap:hover .history-del { opacity: 1; }
+        .history-item-wrap.active { background: #2a2a2a; }
+        .history-item {
+            flex: 1; display: flex; align-items: center; gap: 8px;
+            padding: 9px 10px; color: #ccc;
+            font-size: 0.84em; cursor: pointer; border: none; background: none; text-align: left;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .history-item:hover { color: #fff; }
+        .history-item-wrap.active .history-item { color: #fff; }
         .history-item span { overflow: hidden; text-overflow: ellipsis; }
+        .history-del {
+            opacity: 0; flex-shrink: 0; padding: 6px 8px;
+            background: none; border: none; color: #666; cursor: pointer;
+            font-size: 0.9em; transition: color 0.15s, opacity 0.15s;
+        }
+        .history-del:hover { color: #ff6b6b; }
 
         .sidebar-bottom { padding: 12px; border-top: 1px solid #2a2a2a; }
         .admin-btn {
@@ -267,19 +280,31 @@
                 return;
             }
             el.innerHTML = list.map(r => `
-                <button class="history-item" onclick="loadRoom(${r.chat_room_id}, this)">
-                    <span>${escHtml(r.first_question || '대화')}</span>
-                </button>`).join('');
+                <div class="history-item-wrap" id="wrap-${r.chat_room_id}">
+                    <button class="history-item" onclick="loadRoom(${r.chat_room_id}, '${r.session_id}', this)">
+                        <span>${escHtml(r.first_question || '대화')}</span>
+                    </button>
+                    <button class="history-del" onclick="deleteRoom(${r.chat_room_id})" title="삭제">✕</button>
+                </div>`).join('');
         } catch {
             document.getElementById('history-list').innerHTML =
                 '<div style="color:#444; font-size:0.8em; padding:8px 10px;">불러오기 실패</div>';
         }
     }
 
-    async function loadRoom(chatRoomId, btn) {
-        document.querySelectorAll('.history-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    async function deleteRoom(chatRoomId) {
+        await fetch(`${BASE}/api/history/${chatRoomId}`, { method: 'DELETE' });
+        if (currentRoomId === chatRoomId) {
+            newChat();
+        }
+        loadHistory();
+    }
+
+    async function loadRoom(chatRoomId, roomSessionId, btn) {
+        document.querySelectorAll('.history-item-wrap').forEach(b => b.classList.remove('active'));
+        btn.closest('.history-item-wrap').classList.add('active');
         currentRoomId = chatRoomId;
+        sessionId = roomSessionId;
 
         try {
             const res  = await fetch(`${BASE}/api/history/${DEVICE_ID}/${chatRoomId}`);
