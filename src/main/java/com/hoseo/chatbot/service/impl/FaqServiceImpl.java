@@ -31,17 +31,7 @@ public class FaqServiceImpl implements FaqService {
         return faqs.stream().map(this::toResponse).toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<FaqResponseDto> getTopFaqs(int limit) {
-        // 요구사항에 맞춰 limit=10이면 TOP10, 그 외에는 기본 TOP5로 처리합니다.
-        List<FaqEntity> faqs = limit == 10
-                ? faqRepository.findTop10ByIsActiveTrueOrderByViewCountDesc()
-                : faqRepository.findTop5ByIsActiveTrueOrderByViewCountDesc();
-        return faqs.stream().map(this::toResponse).toList();
-    }
-
-    @Override
+@Override
     @Transactional
     public FaqResponseDto createFaq(FaqRequestDto request) {
         // 사용자의 실제 질문 로그가 아니라, 관리자가 정제한 대표 FAQ를 저장합니다.
@@ -72,18 +62,6 @@ public class FaqServiceImpl implements FaqService {
         faq.setIsActive(false);
     }
 
-    @Override
-    @Transactional
-    public FaqResponseDto clickFaq(Long id) {
-        // 활성 FAQ를 클릭했을 때만 조회수를 증가시킵니다.
-        FaqEntity faq = getFaqOrThrow(id);
-        if (!Boolean.TRUE.equals(faq.getIsActive())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "faq not found");
-        }
-        faq.increaseViewCount();
-        return toResponse(faq);
-    }
-
     private FaqEntity getFaqOrThrow(Long id) {
         // FAQ가 없으면 공통적으로 404를 반환하기 위한 보조 메서드입니다.
         return faqRepository.findById(id)
@@ -97,7 +75,6 @@ public class FaqServiceImpl implements FaqService {
                 faq.getCategory(),
                 faq.getQuestion(),
                 faq.getSortOrder(),
-                faq.getViewCount(),
                 faq.getIsActive(),
                 faq.getCreatedAt(),
                 faq.getUpdatedAt()

@@ -21,6 +21,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import reactor.core.Disposable;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -37,6 +39,7 @@ public class ChatServiceImpl implements ChatService {
             ChatMessageRepository chatMessageRepository) {
         this.webClient = WebClient.builder()
                 .baseUrl(ragServerUrl)
+                .defaultHeader("ngrok-skip-browser-warning", "true")
                 .build();
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
@@ -45,7 +48,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public SseEmitter ask(ChatRequestDto request) {
-        SseEmitter emitter = new SseEmitter(60_000L);
+        SseEmitter emitter = new SseEmitter(180_000L);
 
         // userId 기반으로 사용자 찾거나 새로 생성
         UserEntity user = userRepository.findByDeviceId(request.getUserId())
@@ -69,12 +72,38 @@ public class ChatServiceImpl implements ChatService {
                 "use_tv_rag", true
         );
 
-        webClient.post()
+        AtomicReference<Disposable> subscriptionRef = new AtomicReference<>();
+        AtomicReference<Disposable> heartbeatRef = new AtomicReference<>();
+
+        Disposable heartbeat = Flux.interval(Duration.ofSeconds(3))
+                .subscribe(tick -> {
+                    try {
+                        emitter.send(SseEmitter.event().comment("ping"));
+                    } catch (Exception ignored) {}
+                });
+        heartbeatRef.set(heartbeat);
+
+        emitter.onCompletion(() -> {
+            Disposable d = subscriptionRef.get();
+            if (d != null) d.dispose();
+            Disposable h = heartbeatRef.get();
+            if (h != null) h.dispose();
+        });
+        emitter.onTimeout(() -> {
+            Disposable d = subscriptionRef.get();
+            if (d != null) d.dispose();
+            Disposable h = heartbeatRef.get();
+            if (h != null) h.dispose();
+            emitter.complete();
+        });
+
+        Disposable disposable = webClient.post()
                 .uri("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(Map.class)
+                .timeout(Duration.ofSeconds(120))
                 .flatMapMany(response -> {
                     String answer = response.get("answer") != null ? (String) response.get("answer") : "";
                     List<?> sources = (List<?>) response.get("sources");
@@ -104,11 +133,14 @@ public class ChatServiceImpl implements ChatService {
                             try {
                                 emitter.send(SseEmitter.event()
                                         .data(event, MediaType.APPLICATION_JSON));
-                            } catch (IOException e) {
-                                emitter.completeWithError(e);
+                            } catch (Exception e) {
+                                Disposable d = subscriptionRef.get();
+                                if (d != null) d.dispose();
                             }
                         },
                         error -> {
+                            Disposable h = heartbeatRef.get();
+                            if (h != null) h.dispose();
                             try {
                                 emitter.send(SseEmitter.event()
                                         .data(Map.of("error", Map.of(
@@ -116,20 +148,23 @@ public class ChatServiceImpl implements ChatService {
                                                 "message", error.getMessage()
                                         )), MediaType.APPLICATION_JSON));
                                 emitter.complete();
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 emitter.completeWithError(e);
                             }
                         },
                         () -> {
+                            Disposable h = heartbeatRef.get();
+                            if (h != null) h.dispose();
                             try {
                                 emitter.send(SseEmitter.event().data("[DONE]"));
                                 emitter.complete();
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 emitter.completeWithError(e);
                             }
                         }
                 );
 
+        subscriptionRef.set(disposable);
         return emitter;
     }
 }

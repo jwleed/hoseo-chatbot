@@ -35,7 +35,13 @@ public class NoticeEventController {
                     .body(Map.of("status", "error", "message", "items 필드가 비어 있습니다"));
         }
 
-        System.out.println("공지 이벤트 수신: " + dto.getItems().size() + "건");
+        System.out.println("========== 공지 이벤트 수신: " + dto.getItems().size() + "건 ==========");
+        dto.getItems().forEach(item ->
+            System.out.printf("  [공지] ID=%s | 제목=%s | 날짜=%s | 카테고리=%s/%s | 대상=%s | URL=%s%n",
+                item.getNoticeId(), item.getTitle(), item.getDate(),
+                item.getMajorCategory(), item.getCategory(),
+                item.getTarget(), item.getUrl())
+        );
         int processed = noticeEventService.processNotices(dto);
 
         return ResponseEntity.ok(Map.of(

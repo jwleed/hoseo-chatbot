@@ -14,11 +14,4 @@ public interface FaqRepository extends JpaRepository<FaqEntity, Long> {
     @Query(value = "select * from faqs where category = :category and is_active = true order by sort_order asc", nativeQuery = true)
     List<FaqEntity> findByCategoryAndIsActiveTrueOrderBySortOrderAsc(String category);
 
-    // 클릭 수 기준 인기 FAQ 5개를 조회합니다.
-    @Query(value = "select * from faqs where is_active = true order by view_count desc limit 5", nativeQuery = true)
-    List<FaqEntity> findTop5ByIsActiveTrueOrderByViewCountDesc();
-
-    // 클릭 수 기준 인기 FAQ 10개를 조회합니다.
-    @Query(value = "select * from faqs where is_active = true order by view_count desc limit 10", nativeQuery = true)
-    List<FaqEntity> findTop10ByIsActiveTrueOrderByViewCountDesc();
 }

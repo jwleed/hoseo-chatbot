@@ -15,4 +15,6 @@ public interface KeywordService {
     void updateSetting(String deviceId, boolean notificationYn);
 
     void registerFcmToken(String userId, String fcmToken);
+
+    void saveCategories(String userId, List<String> categories);
 }

@@ -38,11 +38,7 @@ public class FaqEntity {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
-    // 사용자가 FAQ를 클릭한 횟수입니다. 인기 FAQ TOP5/TOP10 계산에 사용합니다.
-    @Column(name = "view_count", nullable = false)
-    private Long viewCount = 0L;
-
-    // FAQ 삭제는 물리 삭제가 아니라 비활성화 방식으로 처리합니다.
+// FAQ 삭제는 물리 삭제가 아니라 비활성화 방식으로 처리합니다.
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -58,12 +54,7 @@ public class FaqEntity {
         this.sortOrder = sortOrder;
     }
 
-    public void increaseViewCount() {
-        // FAQ 클릭 API가 호출될 때마다 조회수를 1 증가시킵니다.
-        this.viewCount = this.viewCount + 1;
-    }
-
-    @PrePersist
+@PrePersist
     void onCreate() {
         // FAQ가 처음 등록될 때 생성일/수정일을 자동으로 기록합니다.
         LocalDateTime now = LocalDateTime.now();

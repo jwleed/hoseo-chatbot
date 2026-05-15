@@ -9,7 +9,6 @@ public record FaqResponseDto(
         String category,
         String question,
         Integer sortOrder,
-        Long viewCount,
         Boolean isActive,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

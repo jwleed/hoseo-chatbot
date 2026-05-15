@@ -1,6 +1,7 @@
 package com.hoseo.chatbot.controller;
 
 import com.hoseo.chatbot.dto.FcmTokenRequestDto;
+import com.hoseo.chatbot.dto.UserCategoryRequestDto;
 import com.hoseo.chatbot.service.KeywordService;
 import java.util.Map;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,12 @@ public class UserController {
     @PostMapping("/fcm-token")
     public Map<String, String> registerFcmToken(@RequestBody FcmTokenRequestDto request) {
         keywordService.registerFcmToken(request.userId(), request.fcmToken());
+        return Map.of("status", "success");
+    }
+
+    @PostMapping("/categories")
+    public Map<String, String> saveCategories(@RequestBody UserCategoryRequestDto request) {
+        keywordService.saveCategories(request.userId(), request.categories());
         return Map.of("status", "success");
     }
 }

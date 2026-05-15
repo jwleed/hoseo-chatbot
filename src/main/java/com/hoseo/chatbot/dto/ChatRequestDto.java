@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 public class ChatRequestDto {
-    private String userId;    // 추가
-    private String sessionId; // 추가
-    private String question;  // 기존 유지
+    private String userId;
+    private String sessionId;
+    private String question;
+    private String category;
 }

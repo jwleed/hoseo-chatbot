@@ -14,6 +14,8 @@ public interface KeywordRepository extends JpaRepository<KeywordEntity, Long> {
 
     long countByUser(UserEntity user);
 
+    List<KeywordEntity> findByUser(UserEntity user);
+
     // 공지 키워드 매칭 시 user를 함께 로딩하여 N+1 방지
     @Query("SELECT k FROM KeywordEntity k JOIN FETCH k.user")
     List<KeywordEntity> findAllWithUser();

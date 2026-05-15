@@ -45,14 +45,7 @@ public class FaqController {
         return faqService.getFaqs(category);
     }
 
-    @GetMapping("/top")
-    public List<FaqResponseDto> getTopFaqs(@RequestParam(defaultValue = "5") int limit) {
-        // FAQ 클릭 수(viewCount)를 기준으로 인기 FAQ를 조회합니다.
-        // 현재 서비스 로직은 limit=10이면 TOP10, 그 외에는 TOP5를 반환합니다.
-        return faqService.getTopFaqs(limit);
-    }
-
-    @PostMapping
+@PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FaqResponseDto createFaq(
             @RequestHeader("X-Admin-Key") String apiKey,
@@ -79,8 +72,4 @@ public class FaqController {
         faqService.deleteFaq(id);
     }
 
-    @PostMapping("/{id}/click")
-    public FaqResponseDto clickFaq(@PathVariable Long id) {
-        return faqService.clickFaq(id);
-    }
 }

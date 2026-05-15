@@ -73,11 +73,28 @@ public class KeywordServiceImpl implements KeywordService {
 
     @Override
     @Transactional
+    public void saveCategories(String userId, List<String> categories) {
+        UserEntity user = userRepository.findByDeviceId(userId)
+                .orElseGet(() -> userRepository.save(new UserEntity(userId)));
+
+        List<KeywordEntity> existing = keywordRepository.findByUser(user);
+        existing.forEach(kw -> notificationRepository.deleteByKeyword_Id(kw.getId()));
+        keywordRepository.deleteAll(existing);
+
+        categories.stream()
+                .filter(c -> c != null && !c.isBlank())
+                .map(c -> new KeywordEntity(user, c))
+                .forEach(keywordRepository::save);
+    }
+
+    @Override
+    @Transactional
     public void registerFcmToken(String userId, String fcmToken) {
         if (fcmToken == null || fcmToken.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fcm_token required");
         }
-        UserEntity user = findUserOrThrow(userId);
+        UserEntity user = userRepository.findByDeviceId(userId)
+                .orElseGet(() -> userRepository.save(new UserEntity(userId)));
         user.setFcmToken(fcmToken);
     }
 

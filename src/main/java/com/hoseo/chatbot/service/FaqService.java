@@ -9,13 +9,9 @@ import java.util.List;
 public interface FaqService {
     List<FaqResponseDto> getFaqs(String category);
 
-    List<FaqResponseDto> getTopFaqs(int limit);
-
     FaqResponseDto createFaq(FaqRequestDto request);
 
     FaqResponseDto updateFaq(Long id, FaqRequestDto request);
 
     void deleteFaq(Long id);
-
-    FaqResponseDto clickFaq(Long id);
 }
