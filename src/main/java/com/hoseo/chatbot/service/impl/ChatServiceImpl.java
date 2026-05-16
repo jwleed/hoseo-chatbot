@@ -176,10 +176,9 @@ public class ChatServiceImpl implements ChatService {
                             if (h != null) h.dispose();
                             try {
                                 emitter.send(SseEmitter.event()
-                                        .data(Map.of("error", Map.of(
-                                                "code", "CONNECTION_FAILED",
-                                                "message", error.getMessage()
-                                        )), MediaType.APPLICATION_JSON));
+                                        .data(Map.of("chunk", "AI 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
+                                                MediaType.APPLICATION_JSON));
+                                emitter.send(SseEmitter.event().data("[DONE]"));
                                 emitter.complete();
                             } catch (Exception e) {
                                 emitter.completeWithError(e);
