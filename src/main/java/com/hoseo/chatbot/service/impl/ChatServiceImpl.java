@@ -9,12 +9,15 @@ import com.hoseo.chatbot.repository.ChatMessageRepository;
 import com.hoseo.chatbot.repository.ChatRoomRepository;
 import com.hoseo.chatbot.repository.UserRepository;
 import com.hoseo.chatbot.service.ChatService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -26,6 +29,8 @@ import reactor.core.Disposable;
 
 @Service
 public class ChatServiceImpl implements ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatServiceImpl.class);
 
     private final WebClient webClient;
     private final UserRepository userRepository;
@@ -48,27 +53,35 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public SseEmitter ask(ChatRequestDto request) {
+        log.info("[CHAT] 요청 수신 | userId={} | sessionId={} | category={} | question={}",
+                request.getUserId(), request.getSessionId(), request.getCategory(), request.getQuestion());
+
         SseEmitter emitter = new SseEmitter(180_000L);
 
-        // userId 기반으로 사용자 찾거나 새로 생성
         UserEntity user = userRepository.findByDeviceId(request.getUserId())
                 .orElseGet(() -> userRepository.save(new UserEntity(request.getUserId())));
 
-        // sessionId 기반으로 채팅방 찾거나 새로 생성 (제목은 첫 질문 앞 30자)
         String title = request.getQuestion().length() > 30
                 ? request.getQuestion().substring(0, 30)
                 : request.getQuestion();
         ChatRoomEntity chatRoom = chatRoomRepository.findBySessionId(request.getSessionId())
                 .orElseGet(() -> chatRoomRepository.save(new ChatRoomEntity(user, request.getSessionId(), title)));
 
-        // USER 메시지 저장
         chatMessageRepository.save(new ChatMessageEntity(chatRoom, ChatMessageRole.USER, request.getQuestion()));
         chatRoom.refreshUpdatedAt();
         chatRoomRepository.save(chatRoom);
 
+        String domain = switch (request.getCategory() != null ? request.getCategory() : "") {
+            case "rules", "학칙" -> "rules";
+            default -> "notice";
+        };
+
+        log.info("[CHAT] RAG 서버 요청 | domain={}", domain);
+        long ragStart = System.currentTimeMillis();
+
         Map<String, Object> body = Map.of(
                 "question", request.getQuestion(),
-                "domain", "notice",
+                "domain", domain,
                 "use_tv_rag", true
         );
 
@@ -78,23 +91,32 @@ public class ChatServiceImpl implements ChatService {
         Disposable heartbeat = Flux.interval(Duration.ofSeconds(3))
                 .subscribe(tick -> {
                     try {
-                        emitter.send(SseEmitter.event().comment("ping"));
+                        emitter.send(SseEmitter.event().name("ping").data(""));
                     } catch (Exception ignored) {}
                 });
         heartbeatRef.set(heartbeat);
 
         emitter.onCompletion(() -> {
+            log.info("[CHAT] emitter 연결 종료 (정상)");
             Disposable d = subscriptionRef.get();
             if (d != null) d.dispose();
             Disposable h = heartbeatRef.get();
             if (h != null) h.dispose();
         });
         emitter.onTimeout(() -> {
+            log.warn("[CHAT] emitter 타임아웃 발생");
             Disposable d = subscriptionRef.get();
             if (d != null) d.dispose();
             Disposable h = heartbeatRef.get();
             if (h != null) h.dispose();
             emitter.complete();
+        });
+        emitter.onError(e -> {
+            log.error("[CHAT] emitter 오류 발생 | error={}", e.getMessage());
+            Disposable d = subscriptionRef.get();
+            if (d != null) d.dispose();
+            Disposable h = heartbeatRef.get();
+            if (h != null) h.dispose();
         });
 
         Disposable disposable = webClient.post()
@@ -104,16 +126,19 @@ public class ChatServiceImpl implements ChatService {
                 .retrieve()
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofSeconds(120))
+                .publishOn(Schedulers.boundedElastic())
                 .flatMapMany(response -> {
                     String answer = response.get("answer") != null ? (String) response.get("answer") : "";
                     List<?> sources = (List<?>) response.get("sources");
+                    Object latency = response.get("latency_sec");
+                    log.info("[CHAT] RAG 응답 수신 | 백엔드측 {}ms | AI처리 {}초 | answerLength={} | sourcesCount={}",
+                            System.currentTimeMillis() - ragStart, latency, answer.length(), sources != null ? sources.size() : 0);
+                    log.info("[CHAT] SSE 청크 전송 시작");
 
-                    // ASSISTANT 메시지 저장
                     chatMessageRepository.save(new ChatMessageEntity(chatRoom, ChatMessageRole.ASSISTANT, answer));
                     chatRoom.refreshUpdatedAt();
                     chatRoomRepository.save(chatRoom);
 
-                    // 단어 단위로 쪼개기 (공백 포함)
                     String[] tokens = answer.split("(?<= )");
 
                     List<Object> events = new ArrayList<>();
@@ -121,10 +146,12 @@ public class ChatServiceImpl implements ChatService {
                         events.add(Map.of("chunk", token));
                     }
                     if (sources != null && !sources.isEmpty()) {
-                        events.add(Map.of("chunk", "", "sources", sources));
+                        String sourcesText = String.join(", ", sources.stream()
+                                .map(Object::toString)
+                                .toList());
+                        events.add(Map.of("chunk", "", "sources", sourcesText));
                     }
 
-                    // 토큰마다 30ms 딜레이
                     return Flux.fromIterable(events)
                             .delayElements(Duration.ofMillis(30));
                 })
@@ -134,11 +161,13 @@ public class ChatServiceImpl implements ChatService {
                                 emitter.send(SseEmitter.event()
                                         .data(event, MediaType.APPLICATION_JSON));
                             } catch (Exception e) {
+                                log.warn("[CHAT] 클라이언트 연결 끊김 (청크 전송 중) | error={}", e.getMessage());
                                 Disposable d = subscriptionRef.get();
                                 if (d != null) d.dispose();
                             }
                         },
                         error -> {
+                            log.error("[CHAT] RAG 서버 오류 | error={}", error.getMessage());
                             Disposable h = heartbeatRef.get();
                             if (h != null) h.dispose();
                             try {
@@ -153,6 +182,7 @@ public class ChatServiceImpl implements ChatService {
                             }
                         },
                         () -> {
+                            log.info("[CHAT] SSE 스트리밍 완료");
                             Disposable h = heartbeatRef.get();
                             if (h != null) h.dispose();
                             try {
