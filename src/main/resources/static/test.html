@@ -293,7 +293,7 @@
     }
 
     async function deleteRoom(chatRoomId) {
-        await fetch(`${BASE}/api/history/${chatRoomId}`, { method: 'DELETE' });
+        await fetch(`${BASE}/api/history/${DEVICE_ID}/${chatRoomId}`, { method: 'DELETE' });
         if (currentRoomId === chatRoomId) {
             newChat();
         }

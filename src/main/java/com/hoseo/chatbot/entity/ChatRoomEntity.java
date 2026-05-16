@@ -37,7 +37,7 @@ public class ChatRoomEntity {
 
     // 프론트가 전달하는 세션 식별자입니다.
     // 현재 로직은 sessionId를 기준으로 기존 채팅방을 찾거나 새로 만듭니다.
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String sessionId;
 
     // 채팅방 목록에서 보여줄 제목입니다. 첫 질문의 앞 30자를 저장합니다.

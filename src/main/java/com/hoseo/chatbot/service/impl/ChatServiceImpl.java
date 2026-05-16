@@ -45,6 +45,7 @@ public class ChatServiceImpl implements ChatService {
         this.webClient = WebClient.builder()
                 .baseUrl(ragServerUrl)
                 .defaultHeader("ngrok-skip-browser-warning", "true")
+                .codecs(config -> config.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
                 .build();
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;

@@ -63,10 +63,14 @@ public class HistoryServiceImpl implements HistoryService {
 
     @Override
     @Transactional
-    public void deleteRoom(Long chatRoomId) {
-        if (!chatRoomRepository.existsById(chatRoomId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "chat room not found");
+    public void deleteRoom(String deviceId, Long chatRoomId) {
+        ChatRoomEntity room = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "chat room not found"));
+
+        if (!room.getUser().getDeviceId().equals(deviceId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
         }
+
         chatMessageRepository.deleteByChatRoom_Id(chatRoomId);
         chatRoomRepository.deleteById(chatRoomId);
     }

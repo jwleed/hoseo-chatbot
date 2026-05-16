@@ -41,10 +41,11 @@ public class HistoryController {
         return historyService.getMessages(deviceId, chatRoomId);
     }
 
-    @DeleteMapping("/{chatRoomId}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable Long chatRoomId) {
-        // 채팅방 삭제 시 메시지를 먼저 삭제한 뒤 채팅방을 삭제합니다.
-        historyService.deleteRoom(chatRoomId);
+    @DeleteMapping("/{deviceId}/{chatRoomId}")
+    public ResponseEntity<Void> deleteRoom(
+            @PathVariable String deviceId,
+            @PathVariable Long chatRoomId) {
+        historyService.deleteRoom(deviceId, chatRoomId);
         return ResponseEntity.noContent().build();
     }
 }

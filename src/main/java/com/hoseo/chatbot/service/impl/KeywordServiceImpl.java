@@ -74,6 +74,9 @@ public class KeywordServiceImpl implements KeywordService {
     @Override
     @Transactional
     public void saveCategories(String userId, List<String> categories) {
+        if (userId == null || userId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
+        }
         UserEntity user = userRepository.findByDeviceId(userId)
                 .orElseGet(() -> userRepository.save(new UserEntity(userId)));
 
@@ -90,6 +93,9 @@ public class KeywordServiceImpl implements KeywordService {
     @Override
     @Transactional
     public void registerFcmToken(String userId, String fcmToken) {
+        if (userId == null || userId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
+        }
         if (fcmToken == null || fcmToken.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fcm_token required");
         }

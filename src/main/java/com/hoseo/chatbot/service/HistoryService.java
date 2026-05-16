@@ -11,5 +11,5 @@ public interface HistoryService {
 
     HistoryDetailResponseDto getMessages(String deviceId, Long chatRoomId);
 
-    void deleteRoom(Long chatRoomId);
+    void deleteRoom(String deviceId, Long chatRoomId);
 }
