@@ -58,6 +58,10 @@ public class ChatServiceImpl implements ChatService {
 
         SseEmitter emitter = new SseEmitter(180_000L);
 
+        if (request.getUserId() == null || request.getUserId().isBlank()) {
+            throw new IllegalArgumentException("userId는 필수입니다.");
+        }
+
         UserEntity user = userRepository.findByDeviceId(request.getUserId())
                 .orElseGet(() -> userRepository.save(new UserEntity(request.getUserId())));
 
