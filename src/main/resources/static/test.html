@@ -216,8 +216,17 @@
 </div>
 
 <script>
-    const BASE      = window.location.origin;
-    const DEVICE_ID = 'test-user-001';
+    const BASE = window.location.origin;
+    function getOrCreateDeviceId() {
+        let id = localStorage.getItem('hoseo_device_id');
+        if (!id) {
+            const rand = () => Math.random().toString(36).slice(2);
+            id = 'user-' + rand() + rand();
+            localStorage.setItem('hoseo_device_id', id);
+        }
+        return id;
+    }
+    const DEVICE_ID = getOrCreateDeviceId();
     let   sessionId = 'session-' + Date.now();
     let   currentRoomId = null;
 

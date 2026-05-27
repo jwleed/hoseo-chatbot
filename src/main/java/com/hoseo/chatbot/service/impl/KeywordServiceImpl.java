@@ -9,6 +9,7 @@ import com.hoseo.chatbot.repository.NotificationRepository;
 import com.hoseo.chatbot.repository.UserRepository;
 import com.hoseo.chatbot.service.KeywordService;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,11 @@ public class KeywordServiceImpl implements KeywordService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "KEYWORD_LIMIT_EXCEEDED");
         }
 
-        return toResponse(keywordRepository.save(new KeywordEntity(user, request.keyword())));
+        try {
+            return toResponse(keywordRepository.save(new KeywordEntity(user, request.keyword())));
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "KEYWORD_DUPLICATE");
+        }
     }
 
     @Override
@@ -81,8 +86,13 @@ public class KeywordServiceImpl implements KeywordService {
         existing.forEach(kw -> notificationRepository.deleteByKeyword_Id(kw.getId()));
         keywordRepository.deleteAll(existing);
 
-        categories.stream()
+        List<String> filtered = categories.stream()
                 .filter(c -> c != null && !c.isBlank())
+                .distinct()
+                .limit(10)
+                .toList();
+
+        filtered.stream()
                 .map(c -> new KeywordEntity(user, c))
                 .forEach(keywordRepository::save);
     }
@@ -101,9 +111,6 @@ public class KeywordServiceImpl implements KeywordService {
     private void validate(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "KEYWORD_BLANK");
-        }
-        if (keyword.length() > 10) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "KEYWORD_TOO_LONG");
         }
     }
 
