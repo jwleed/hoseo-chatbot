@@ -41,11 +41,11 @@ public class NoticeEventServiceImpl implements NoticeEventService {
 
     private void matchAndNotify(NoticeItemDto item, List<KeywordEntity> keywords) {
         String title = item.getTitle() != null ? item.getTitle() : "";
+        String majorCategory = item.getMajorCategory() != null ? item.getMajorCategory() : "";
         String url = item.getUrl() != null ? item.getUrl() : "";
 
         for (KeywordEntity kw : keywords) {
-            if (!title.contains(kw.getKeyword())) {
-                System.out.printf("  [미매칭] keyword='%s' | 제목='%s'%n", kw.getKeyword(), title);
+            if (!majorCategory.equals(kw.getKeyword())) {
                 continue;
             }
 

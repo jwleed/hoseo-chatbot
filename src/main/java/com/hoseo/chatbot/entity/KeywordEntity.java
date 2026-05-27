@@ -32,7 +32,7 @@ public class KeywordEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false)
     private String keyword;
 
     @Column(nullable = false)
