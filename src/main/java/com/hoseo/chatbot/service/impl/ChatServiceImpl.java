@@ -46,6 +46,12 @@ public class ChatServiceImpl implements ChatService {
         this.chatMessageRepository = chatMessageRepository;
     }
 
+    private String truncateAtWord(String text, int maxLen) {
+        if (text.length() <= maxLen) return text;
+        int cut = text.lastIndexOf(' ', maxLen);
+        return cut > 0 ? text.substring(0, cut) : text.substring(0, maxLen);
+    }
+
     @Override
     public SseEmitter ask(ChatRequestDto request) {
         SseEmitter emitter = new SseEmitter(180_000L);
@@ -55,9 +61,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElseGet(() -> userRepository.save(new UserEntity(request.getUserId())));
 
         // sessionId 기반으로 채팅방 찾거나 새로 생성 (제목은 첫 질문 앞 30자)
-        String title = request.getQuestion().length() > 30
-                ? request.getQuestion().substring(0, 30)
-                : request.getQuestion();
+        String title = truncateAtWord(request.getQuestion(), 30);
         ChatRoomEntity chatRoom = chatRoomRepository.findBySessionId(request.getSessionId())
                 .orElseGet(() -> chatRoomRepository.save(new ChatRoomEntity(user, request.getSessionId(), title)));
 

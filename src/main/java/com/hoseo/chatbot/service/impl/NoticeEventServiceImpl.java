@@ -63,7 +63,11 @@ public class NoticeEventServiceImpl implements NoticeEventService {
             }
 
             notificationRepository.save(new NotificationEntity(user, kw, title, url));
-            fcmService.send(user.getFcmToken(), kw.getKeyword(), title, item.getDate(), url);
+            boolean tokenValid = fcmService.send(user.getFcmToken(), kw.getKeyword(), title, item.getDate(), url);
+            if (!tokenValid) {
+                System.out.printf("  [토큰 만료] user=%s FCM 토큰 삭제%n", user.getDeviceId());
+                user.setFcmToken(null);
+            }
             System.out.printf("  [발송] user=%s | keyword=%s | 제목=%s%n", user.getDeviceId(), kw.getKeyword(), title);
         }
     }
