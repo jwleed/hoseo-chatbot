@@ -51,7 +51,7 @@ public class FaqServiceImpl implements FaqService {
         faq.setCategory(request.category());
         faq.setQuestion(request.question());
         faq.setSortOrder(request.sortOrder());
-        return toResponse(faq);
+        return toResponse(faqRepository.saveAndFlush(faq));
     }
 
     @Override

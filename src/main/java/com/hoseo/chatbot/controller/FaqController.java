@@ -48,7 +48,7 @@ public class FaqController {
 @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FaqResponseDto createFaq(
-            @RequestHeader("X-Admin-Key") String apiKey,
+            @RequestHeader(value = "X-Admin-Key", required = false) String apiKey,
             @Valid @RequestBody FaqRequestDto request) {
         checkAdminKey(apiKey);
         return faqService.createFaq(request);
@@ -56,7 +56,7 @@ public class FaqController {
 
     @PutMapping("/{id}")
     public FaqResponseDto updateFaq(
-            @RequestHeader("X-Admin-Key") String apiKey,
+            @RequestHeader(value = "X-Admin-Key", required = false) String apiKey,
             @PathVariable Long id,
             @Valid @RequestBody FaqRequestDto request) {
         checkAdminKey(apiKey);
@@ -66,7 +66,7 @@ public class FaqController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFaq(
-            @RequestHeader("X-Admin-Key") String apiKey,
+            @RequestHeader(value = "X-Admin-Key", required = false) String apiKey,
             @PathVariable Long id) {
         checkAdminKey(apiKey);
         faqService.deleteFaq(id);
